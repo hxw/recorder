@@ -1,0 +1,65 @@
+-- recorder.conf  -*- mode: lua -*-
+
+local M = {}
+
+-- Read the named file in under the specified data directory
+-- M.data_directory and return the contents.
+function read_file(name)
+    local f, err = io.open(M.data_directory .. "/" .. name, "r")
+    if f == nil then
+        return nil
+    end
+    local r = f:read("*a")
+    f:close()
+    return r
+end
+
+-- set the directory for data and log files
+M.data_directory = arg[0]:match("(.*/)")     -- dir from configuration file
+--M.data_directory = "."                       -- current directory
+--M.data_directory = "/var/db/recorder      "  -- absolute path
+
+-- connection to bitmarkd
+M.connection = {
+
+    -- number of hashing threads
+    workers = 4,
+
+    -- bitmarkd parameters
+    host = "node-d4.live.bitmark.com",
+    public_key = "cf09b24ce5bf5a00538ba8a63a7d4bbd211e833b00483346ef9d88f4756cb50b",
+
+    --host = "node-d4.test.bitmark.com",
+    --public_key = "2248344e51fd2c13701f0dbf8a27b44a921679cc24897b297522bfd010753f4d",
+
+    -- ports
+    subscribe_port = 2138,
+    request_port = 2139,
+
+}
+
+
+-- configure global or specific logger channel levels
+M.logging = {
+
+    -- log file size and rotation count
+    size = 1048576,
+    count = 10,
+
+    -- set to true to log to console
+    console = true,
+
+    -- set log level to output
+    -- "off" gives no output and other level set maximum level to output
+    -- "trace" will output everything
+    --level = "off",
+    --level = "error",
+    --level = "warn",
+    --level = "info",
+    level = "debug",
+    --level = "trace",
+}
+
+
+-- return the complete configuration
+return M
