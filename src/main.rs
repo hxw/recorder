@@ -97,6 +97,7 @@ fn main() -> MyResult<()> {
     log::debug!("resquests to: {}", requester_address);
 
     // setup encrypted subscriber connection
+    subscriber.set_ipv6(!connection.use_ipv4)?;
     subscriber.set_curve_server(false)?;
     subscriber
         .set_curve_serverkey(&server_public_key)
@@ -108,6 +109,7 @@ fn main() -> MyResult<()> {
     subscriber.set_subscribe(s)?;
 
     // setup encrypted request connection
+    requester.set_ipv6(!connection.use_ipv4)?;
     requester.set_curve_server(false)?;
     requester
         .set_curve_serverkey(&server_public_key)

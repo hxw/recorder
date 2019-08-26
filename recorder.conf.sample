@@ -25,6 +25,9 @@ M.connection = {
     -- number of hashing threads
     workers = 4,
 
+    -- set if using ipv4 instead of ipv6
+    use_ipv4 = false,
+
     -- bitmarkd parameters
     host = "node-d4.live.bitmark.com",
     public_key = "cf09b24ce5bf5a00538ba8a63a7d4bbd211e833b00483346ef9d88f4756cb50b",

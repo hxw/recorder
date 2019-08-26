@@ -15,6 +15,7 @@ pub struct Configuration {
 #[derive(Debug, PartialEq)]
 pub struct Connection {
     pub workers: u32,
+    pub use_ipv4: bool,
     pub host: String,
     pub public_key: String,
     pub subscribe_port: u16,
@@ -95,6 +96,10 @@ pub fn read(filename: &str, debug: bool) -> Result<Configuration> {
             workers: match connection.get::<_, String>("workers")?.parse::<u32>() {
                 Ok(n) => n,
                 Err(_) => DEFAULT_WORKERS,
+            },
+            use_ipv4: match logging.get::<_, bool>("use_ipv4") {
+                Ok(n) => n,
+                Err(_) => false,
             },
         };
 
