@@ -8,12 +8,14 @@ use std::io::BufReader;
 #[derive(Debug, PartialEq)]
 pub struct Configuration {
     pub data_directory: String,
-    pub connection: Connection,
+    pub connections: Vec<Connection>,
     pub logging: Logging,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Connection {
+    pub number: i64, // 1..=n
+    pub enable: bool,
     pub workers: u32,
     pub use_ipv4: bool,
     pub host: String,
@@ -79,29 +81,41 @@ pub fn read(filename: &str, debug: bool) -> Result<Configuration> {
             data_directory = DEFAULT_DATA_DIRECTORY.to_string()
         }
 
-        let connection: Table = config.get("connection")?;
+        let connections: Table = config.get("connections")?;
         let logging: Table = config.get("logging")?;
 
-        let cn = Connection {
-            host: connection.get("host")?,
-            public_key: connection.get("public_key")?,
-            subscribe_port: connection
-                .get::<_, String>("subscribe_port")?
-                .parse::<u16>()
-                .unwrap_or(DEFAULT_PUBLISH),
-            request_port: match connection.get::<_, String>("request_port")?.parse::<u16>() {
-                Ok(n) => n,
-                Err(_) => DEFAULT_REQUEST,
-            },
-            workers: match connection.get::<_, String>("workers")?.parse::<u32>() {
-                Ok(n) => n,
-                Err(_) => DEFAULT_WORKERS,
-            },
-            use_ipv4: match logging.get::<_, bool>("use_ipv4") {
-                Ok(n) => n,
-                Err(_) => false,
-            },
-        };
+        let mut cn = Vec::new();
+
+        //for connection in connections {
+        for i in 1..=connections.len()? {
+            let connection: Table = connections.get(i)?;
+            let c = Connection {
+                number: i,
+                enable: match connection.get::<_, bool>("enable") {
+                    Ok(n) => n,
+                    Err(_) => false,
+                },
+                host: connection.get("host")?,
+                public_key: connection.get("public_key")?,
+                subscribe_port: connection
+                    .get::<_, String>("subscribe_port")?
+                    .parse::<u16>()
+                    .unwrap_or(DEFAULT_PUBLISH),
+                request_port: match connection.get::<_, String>("request_port")?.parse::<u16>() {
+                    Ok(n) => n,
+                    Err(_) => DEFAULT_REQUEST,
+                },
+                workers: match connection.get::<_, String>("workers")?.parse::<u32>() {
+                    Ok(n) => n,
+                    Err(_) => DEFAULT_WORKERS,
+                },
+                use_ipv4: match logging.get::<_, bool>("use_ipv4") {
+                    Ok(n) => n,
+                    Err(_) => false,
+                },
+            };
+            cn.push(c);
+        }
 
         let lg = Logging {
             directory: {
@@ -140,7 +154,7 @@ pub fn read(filename: &str, debug: bool) -> Result<Configuration> {
 
         let result = Configuration {
             data_directory: data_directory,
-            connection: cn,
+            connections: cn,
             logging: lg,
         };
         Ok(result)

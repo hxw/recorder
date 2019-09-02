@@ -79,7 +79,25 @@ fn main() -> MyResult<()> {
     log::info!("start logging..");
 
     // open connections
-    let connection = cfg.connection;
+    let mut handles = Vec::new();
+    for connection in cfg.connections {
+        if connection.enable {
+            log::info!("connection: {}", connection.number);
+            handles.push(create_connection(connection)?);
+        } else {
+            log::debug!("connection: {} is disabled", connection.number);
+        }
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    Ok(())
+}
+
+fn create_connection(connection: config::Connection) -> MyResult<std::thread::JoinHandle<()>> {
+    let set = connection.number;
 
     let context = zmq::Context::new();
     let subscriber = context.socket(zmq::SUB)?;
@@ -93,8 +111,8 @@ fn main() -> MyResult<()> {
     let requester_address =
         "tcp://".to_owned() + &connection.host + ":" + &connection.request_port.to_string();
 
-    log::debug!("subscribe to: {}", subscriber_address);
-    log::debug!("resquests to: {}", requester_address);
+    log::debug!("C{}: subscribe to: {}", set, subscriber_address);
+    log::debug!("C{}: resquests to: {}", set, requester_address);
 
     // setup encrypted subscriber connection
     subscriber.set_ipv6(!connection.use_ipv4)?;
@@ -118,7 +136,7 @@ fn main() -> MyResult<()> {
     requester.set_curve_secretkey(&client_pair.secret_key)?;
 
     // connect
-    log::info!("connecting…");
+    log::info!("C{}: connecting…", set);
     subscriber
         .connect(&subscriber_address)
         .expect("could not connect to publisher");
@@ -129,22 +147,27 @@ fn main() -> MyResult<()> {
     let (response_tx, response_rx) = std::sync::mpsc::channel::<responder::Response>();
 
     let workers = connection.workers;
-    let handles = worker::create_workers(workers, response_tx);
+    let handles = worker::create_workers(set, workers, response_tx);
 
     // zmq sender
-    let sender = std::thread::spawn(move || {
+    let _sender = std::thread::spawn(move || {
         loop {
-            log::debug!("waiting..");
+            log::debug!("C{}: waiting..", set);
             let request = response_rx.recv().unwrap();
-            log::info!("send: {}  packed: {:02x?}", request.job, request.packed);
+            log::info!(
+                "C{}: send: {}  packed: {:02x?}",
+                set,
+                request.job,
+                request.packed
+            );
 
             let s = serde_json::to_string(&request).unwrap();
-            log::debug!("request JSON: {}", s);
+            log::debug!("C{}: request JSON: {}", set, s);
             requester.send(zmq::Message::from(&s), 0).unwrap();
 
             let data = requester.recv_msg(0).unwrap();
             let reply = std::str::from_utf8(&data).unwrap();
-            log::debug!("reply JSON: {}", reply);
+            log::debug!("C{}: reply JSON: {}", set, reply);
         }
         //drop(requester);
     });
@@ -155,29 +178,28 @@ fn main() -> MyResult<()> {
     let poller = std::thread::spawn(move || {
         let items = &mut [subscriber.as_poll_item(zmq::POLLIN)];
         loop {
-            log::info!("polling…");
+            log::info!("C{}: polling…", set);
             let n = match zmq::poll(items, -1) {
                 Ok(n) => n,
                 Err(_) => 0,
             };
             if n != 0 {
-                log::info!("receive");
+                log::info!("C{}: receive", set);
                 let data = subscriber.recv_msg(0).unwrap();
                 let s = std::str::from_utf8(&data).unwrap();
-                log::info!("JSON: {}", s);
-                log::info!("{}", std::str::from_utf8(&data).unwrap());
+                log::info!("C{}: JSON: {}", set, s);
+                log::debug!("C{}: decoded: {}", set, std::str::from_utf8(&data).unwrap());
 
-                responder::send_job(s, &mut txs).unwrap();
+                responder::send_job(set, s, &mut txs).unwrap();
             }
         }
         //drop(subscriber);
+
+        //sender.join().unwrap();
+        //for handle in handles.join_handles {
+        //    handle.join().unwrap();
+        //}
     });
 
-    sender.join().unwrap();
-    poller.join().unwrap();
-    for handle in handles.join_handles {
-        handle.join().unwrap();
-    }
-
-    Ok(())
+    Ok(poller)
 }

@@ -40,15 +40,16 @@ pub struct Response {
 }
 
 pub fn send_job(
+    set: i64,
     s: &str,
     txs: &mut Vec<spmc::Sender<(bytes::Bytes, u64, std::string::String)>>,
 ) -> MyResult<()> {
     let p: Job = serde_json::from_str(s)?;
 
     // debugging
-    log::debug!("job:    {}", p.job);
-    log::debug!("tx_0:   {:02x?}", p.tx_zero);
-    log::debug!("header: {:?}", p.header);
+    log::debug!("C{}: job:    {}", set, p.job);
+    log::trace!("C{}: tx_0:   {:02x?}", set, p.tx_zero);
+    log::debug!("C{}: header: {:?}", set, p.header);
 
     let h = p.header;
 
@@ -61,7 +62,7 @@ pub fn send_job(
 
     let mut w = 1;
     for tx in txs.iter_mut() {
-        log::info!("send: {}  nonce: {:016x}", w, nnn);
+        log::info!("C{}: send: {}  nonce: {:016x}", set, w, nnn);
         let blk = buf.clone();
         tx.send((blk, nnn, p.job.clone()))?;
         nnn += 0x100000000;

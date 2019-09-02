@@ -15,7 +15,11 @@ pub struct Result {
     pub channel_txs: Vec<spmc::Sender<(bytes::Bytes, u64, String)>>,
 }
 
-pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Response>) -> Result {
+pub fn create_workers(
+    set: i64,
+    workers: u32,
+    tx: std::sync::mpsc::Sender<responder::Response>,
+) -> Result {
     let hash_count = std::sync::atomic::AtomicU64::new(0);
     let arc_hash_count = std::sync::Arc::new(hash_count);
 
@@ -23,6 +27,8 @@ pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Respo
         join_handles: Vec::new(),
         channel_txs: Vec::new(),
     };
+
+    log::debug!("C{}: creating: {} workers", set, workers);
 
     for w in 1..=workers {
         let (subscribe_tx, subscribe_rx) = spmc::channel::<(bytes::Bytes, u64, String)>();
@@ -32,18 +38,18 @@ pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Respo
         let hash_count = arc_hash_count.clone();
         result.join_handles.push(std::thread::spawn(move || {
             'waiting: loop {
-                log::debug!("{}: waiting..", w);
+                log::debug!("C{}: W{}: waiting..", set, w);
                 let (mut blk, mut nonce, mut job) = subscribe_rx.recv().unwrap();
 
                 // let mut hex_blk = String::new();
                 // let _res = blk.write_hex(&mut hex_blk);
                 // log::info!(
-                //     "{}:  blk: {}  nonce: 0x{:x}  job: {}",
-                //     w, hex_blk, nonce, job
+                //     "C{}: W{}:  blk: {}  nonce: 0x{:x}  job: {}",
+                //     set, w, hex_blk, nonce, job
                 // );
 
                 'receiving: loop {
-                    log::debug!("{}: start hashing", w);
+                    log::debug!("C{}: W{}: start hashing", set, w);
                     let mut i = 0;
                     let start = Instant::now();
                     let end = start + Duration::new(MAXIMUM_HASH_SECONDS, 0);
@@ -60,7 +66,13 @@ pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Respo
 
                         // check little_endian MSB
                         if hg[31] == 0 {
-                            log::trace!("{}:  hg: {:02x?}  nonce: {:016x}", w, hg, nonce);
+                            log::trace!(
+                                "C{}: W{}:  hg: {:02x?}  nonce: {:016x}",
+                                set,
+                                w,
+                                hg,
+                                nonce
+                            );
 
                             let response = responder::Response {
                                 request: "block.nonce".to_string(),
@@ -91,7 +103,8 @@ pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Respo
                     let elapsed = duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9;
                     let average = i as f64 / elapsed;
                     log::info!(
-                        "{}:  hashes: {}  in: {:6.2}  average: {:7.3}",
+                        "C{}: W{}:  hashes: {}  in: {:6.2}  average: {:7.3}",
+                        set,
                         w,
                         i,
                         elapsed,
@@ -102,7 +115,7 @@ pub fn create_workers(workers: u32, tx: std::sync::mpsc::Sender<responder::Respo
                     }
                 }
             }
-            log::debug!("worker: {}  failed", w);
+            log::debug!("C{}: worker: {}  failed", set, w);
         }));
     }
 
