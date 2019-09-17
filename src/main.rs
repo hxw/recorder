@@ -13,6 +13,8 @@ use log4rs::append::rolling_file::policy::compound::CompoundPolicy;
 use log4rs::append::rolling_file::RollingFileAppender;
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
+use simple_error::bail;
+use std::path::Path;
 use zmq;
 
 mod block;
@@ -39,6 +41,13 @@ fn main() -> MyResult<()> {
         println!("Value for cfg: {:?}", cfg);
     }
 
+    if !Path::new(&cfg.logging.directory).exists() {
+        bail!(
+            "logging directory: {} does not exist",
+            cfg.logging.directory
+        );
+    }
+
     let pattern = "{d(%Y-%m-%d %H:%M:%S)(utc)} [{l}] {M}: {m}{n}";
     let stdout = ConsoleAppender::builder()
         .encoder(Box::new(PatternEncoder::new(pattern)))
@@ -63,16 +72,32 @@ fn main() -> MyResult<()> {
         )
         .unwrap();
 
-    let config = Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(
+    let filter = match cfg.logging.level.as_ref() {
+        "off" => LevelFilter::Off,
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
+        _ => LevelFilter::Error,
+    };
+
+    let config = if cfg.logging.console {
+        Config::builder().appender(Appender::builder().build("stdout", Box::new(stdout)))
+    } else {
+        Config::builder()
+    }
+    .appender(Appender::builder().build("logfile", Box::new(logfile)))
+    .build(
+        if cfg.logging.console {
+            Root::builder().appender("stdout")
+        } else {
             Root::builder()
-                .appender("stdout")
-                .appender("logfile")
-                .build(LevelFilter::Debug),
-        )
-        .unwrap();
+        }
+        .appender("logfile")
+        .build(filter),
+    )
+    .unwrap();
 
     // start logging
     let _handle = log4rs::init_config(config).unwrap();
@@ -81,7 +106,7 @@ fn main() -> MyResult<()> {
     // open connections
     let mut handles = Vec::new();
     for connection in cfg.connections {
-        if connection.enable {
+        if connection.enable && connection.public_key != "" {
             log::info!("connection: {}", connection.number);
             handles.push(create_connection(connection)?);
         } else {
@@ -167,7 +192,7 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
 
             let data = requester.recv_msg(0).unwrap();
             let reply = std::str::from_utf8(&data).unwrap();
-            log::debug!("C{}: reply JSON: {}", set, reply);
+            log::info!("C{}: reply JSON: {}", set, reply);
         }
         //drop(requester);
     });
@@ -184,10 +209,10 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
                 Err(_) => 0,
             };
             if n != 0 {
-                log::info!("C{}: receive", set);
+                log::debug!("C{}: receive", set);
                 let data = subscriber.recv_msg(0).unwrap();
                 let s = std::str::from_utf8(&data).unwrap();
-                log::info!("C{}: JSON: {}", set, s);
+                log::debug!("C{}: JSON: {}", set, s);
                 log::debug!("C{}: decoded: {}", set, std::str::from_utf8(&data).unwrap());
 
                 responder::send_job(set, s, &mut txs).unwrap();

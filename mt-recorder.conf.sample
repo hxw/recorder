@@ -7,7 +7,7 @@ local M = {}
 function read_file(name)
     local f, err = io.open(M.data_directory .. "/" .. name, "r")
     if f == nil then
-        return nil
+        return ""
     end
     local r = f:read("*a")
     f:close()
@@ -15,9 +15,9 @@ function read_file(name)
 end
 
 -- set the directory for data and log files
-M.data_directory = arg[0]:match("(.*/)")     -- dir from configuration file
+--M.data_directory = arg[0]:match("(.*/)")     -- dir from configuration file
 --M.data_directory = "."                       -- current directory
---M.data_directory = "/var/db/mt-recorder"     -- absolute path
+M.data_directory = "/var/lib/mt-recorder"    -- absolute path
 
 -- connection to bitmarkd
 M.connections = {
@@ -33,7 +33,7 @@ M.connections = {
 
         -- bitmarkd parameters
         host = "node-d4.live.bitmark.com",
-        public_key = "cf09b24ce5bf5a00538ba8a63a7d4bbd211e833b00483346ef9d88f4756cb50b",
+        public_key = "PUBLIC:cf09b24ce5bf5a00538ba8a63a7d4bbd211e833b00483346ef9d88f4756cb50b",
 
         -- ports
         subscribe_port = 2138,
@@ -51,7 +51,7 @@ M.connections = {
 
         -- bitmarkd parameters
         host = "node-d4.test.bitmark.com",
-        public_key = "2248344e51fd2c13701f0dbf8a27b44a921679cc24897b297522bfd010753f4d",
+        public_key = "PUBLIC:2248344e51fd2c13701f0dbf8a27b44a921679cc24897b297522bfd010753f4d",
 
         -- ports
         subscribe_port = 2138,
@@ -69,7 +69,25 @@ M.connections = {
 
         -- bitmarkd parameters
         host = "node-a4.test.bitmark.com",
-        public_key = "ee24397b7b195af6324a74cd31029c243fa52efc43a01f517b101940c0be4579",
+        public_key = "PUBLIC:ee24397b7b195af6324a74cd31029c243fa52efc43a01f517b101940c0be4579",
+
+        -- ports
+        subscribe_port = 2138,
+        request_port = 2139,
+    },
+
+    {
+        enable = true,
+
+        -- number of hashing threads
+        workers = 2,
+
+        -- set if using ipv4 instead of ipv6
+        use_ipv4 = false,
+
+        -- bitmarkd parameters
+        host = "127.0.0.1",
+        public_key = read_file("../bitmarkd/proof.public"),
 
         -- ports
         subscribe_port = 2138,
@@ -87,16 +105,17 @@ M.logging = {
     count = 10,
 
     -- set to true to log to console
-    console = true,
+    --console = true,
+    console = false,
 
     -- set log level to output
     -- "off" gives no output and other level set maximum level to output
     -- "trace" will output everything
     --level = "off",
     --level = "error",
-    --level = "warn",
+    level = "warn",
     --level = "info",
-    level = "debug",
+    --level = "debug",
     --level = "trace",
 }
 

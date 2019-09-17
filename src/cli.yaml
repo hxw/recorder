@@ -1,7 +1,7 @@
 ---
-name: recorder
-version: "0.1.0"
-author: Christopher Hall <hsw@bitmark.com>
+name: mt-recorder
+version: "0.2.0"
+author: Christopher Hall <hsw@ms2.hinet.net>
 about: hash bitmarkd blocks
 args:
     - verbose:

@@ -1,6 +1,6 @@
 [package]
 name = "mt-recorder"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Christopher Hall <hsw@ms2.hinet.net>"]
 edition = "2018"
 
@@ -14,7 +14,9 @@ rlua = "*"
 
 spmc = "*"
 zmq = "*"
-rust-argon2 = "*"
+
+#rust-argon2 = "*"
+argonautica = { version = "*", features = ["simd"] }
 
 bytes = "*"
 

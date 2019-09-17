@@ -96,7 +96,10 @@ pub fn read(filename: &str, debug: bool) -> Result<Configuration> {
                     Err(_) => false,
                 },
                 host: connection.get("host")?,
-                public_key: connection.get("public_key")?,
+                public_key: connection
+                    .get::<_, String>("public_key")?
+                    .trim()
+                    .replace("PUBLIC:", ""),
                 subscribe_port: connection
                     .get::<_, String>("subscribe_port")?
                     .parse::<u16>()
