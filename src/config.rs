@@ -41,7 +41,7 @@ const DEFAULT_REQUEST: u16 = 2139;
 const DEFAULT_WORKERS: u32 = 1;
 
 const DEFAULT_LOG_DIRECTORY: &str = "log";
-const DEFAULT_LOG_FILE: &str = "recorder.log";
+const DEFAULT_LOG_FILE: &str = "mt-recorder.log";
 const DEFAULT_LOG_SIZE: u64 = 10000;
 const DEFAULT_LOG_COUNT: u32 = 1;
 
