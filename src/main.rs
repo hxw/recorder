@@ -215,7 +215,10 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
                 log::debug!("C{}: JSON: {}", set, s);
                 log::debug!("C{}: decoded: {}", set, std::str::from_utf8(&data).unwrap());
 
-                responder::send_job(set, s, &mut txs).unwrap();
+                match responder::send_job(set, s, &mut txs) {
+                    Ok(_) => log::info!("send_job success"),
+                    Err(e) => log::error!("send_job error: {}", e),
+                };
             }
         }
         //drop(subscriber);

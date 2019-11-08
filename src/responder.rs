@@ -1,11 +1,11 @@
 // responder.rs
 
-use base64;
+use base64::STANDARD;
 use base64_serde::base64_serde_type;
 use serde_derive::{Deserialize, Serialize};
 use simple_error::bail;
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+base64_serde_type!(Base64Standard, STANDARD);
 
 type MyResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -13,29 +13,29 @@ use super::block;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Job {
-    #[serde(rename = "Job")]
+    #[serde(rename = "job", alias = "Job")]
     job: String,
 
-    #[serde(rename = "Header")]
+    #[serde(rename = "header", alias = "Header")]
     header: block::Header,
 
-    #[serde(rename = "TxZero", with = "Base64Standard")]
+    #[serde(rename = "txZero", alias = "TxZero", with = "Base64Standard")]
     tx_zero: Vec<u8>,
 
-    //#[serde(rename = "TxIds", with = "hex_serde")]
-    #[serde(rename = "TxIds")]
+    //#[serde(rename = "txIds", with = "hex_serde")]
+    #[serde(rename = "txIds", alias = "TxIds")]
     tx_ids: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Response {
-    #[serde(rename = "Request")]
+    #[serde(rename = "request")]
     pub request: String,
 
-    #[serde(rename = "Job")]
+    #[serde(rename = "job")]
     pub job: String,
 
-    #[serde(rename = "Packed", with = "Base64Standard")]
+    #[serde(rename = "packed", with = "Base64Standard")]
     pub packed: Vec<u8>,
 }
 
