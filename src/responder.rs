@@ -47,8 +47,8 @@ pub fn send_job(
     let p: Job = serde_json::from_str(s)?;
 
     // debugging
-    log::debug!("C{}: job:    {}", set, p.job);
-    log::trace!("C{}: tx_0:   {:02x?}", set, p.tx_zero);
+    log::info!("C{}: job: {}  block: {}", set, p.job, p.header.number);
+    log::trace!("C{}: tx_0: {:02x?}", set, p.tx_zero);
     log::debug!("C{}: header: {:?}", set, p.header);
 
     let h = p.header;
@@ -62,7 +62,7 @@ pub fn send_job(
 
     let mut w = 1;
     for tx in txs.iter_mut() {
-        log::info!("C{}: send: {}  nonce: {:016x}", set, w, nnn);
+        log::info!("C{}: W{}: nonce: {:016x}", set, w, nnn);
         let blk = buf.clone();
         tx.send((blk, nnn, p.job.clone()))?;
         nnn += 0x100000000;

@@ -101,13 +101,13 @@ fn main() -> MyResult<()> {
 
     // start logging
     let _handle = log4rs::init_config(config).unwrap();
-    log::info!("start logging..");
+    log::warn!("=== start ===");
 
     // open connections
     let mut handles = Vec::new();
     for connection in cfg.connections {
         if connection.enable && connection.public_key != "" {
-            log::info!("connection: {}", connection.number);
+            log::debug!("connection: {}", connection.number);
             handles.push(create_connection(connection)?);
         } else {
             log::debug!("connection: {} is disabled", connection.number);
@@ -136,8 +136,8 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
     let requester_address =
         "tcp://".to_owned() + &connection.host + ":" + &connection.request_port.to_string();
 
-    log::debug!("C{}: subscribe to: {}", set, subscriber_address);
-    log::debug!("C{}: resquests to: {}", set, requester_address);
+    log::info!("C{}: subscribe to: {}", set, subscriber_address);
+    log::info!("C{}: resquests to: {}", set, requester_address);
 
     // setup encrypted subscriber connection
     subscriber.set_ipv6(!connection.use_ipv4)?;
@@ -161,7 +161,7 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
     requester.set_curve_secretkey(&client_pair.secret_key)?;
 
     // connect
-    log::info!("C{}: connecting…", set);
+    log::debug!("C{}: connecting…", set);
     subscriber
         .connect(&subscriber_address)
         .expect("could not connect to publisher");
@@ -179,7 +179,7 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
         loop {
             log::debug!("C{}: waiting..", set);
             let request = response_rx.recv().unwrap();
-            log::info!(
+            log::debug!(
                 "C{}: send: {}  packed: {:02x?}",
                 set,
                 request.job,
@@ -187,7 +187,7 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
             );
 
             let s = serde_json::to_string(&request).unwrap();
-            log::debug!("C{}: request JSON: {}", set, s);
+            log::info!("C{}: request JSON: {}", set, s);
             requester.send(zmq::Message::from(&s), 0).unwrap();
 
             let data = requester.recv_msg(0).unwrap();
@@ -203,7 +203,7 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
     let poller = std::thread::spawn(move || {
         let items = &mut [subscriber.as_poll_item(zmq::POLLIN)];
         loop {
-            log::info!("C{}: polling…", set);
+            log::debug!("C{}: polling…", set);
             let n = match zmq::poll(items, -1) {
                 Ok(n) => n,
                 Err(_) => 0,
@@ -212,11 +212,11 @@ fn create_connection(connection: config::Connection) -> MyResult<std::thread::Jo
                 log::debug!("C{}: receive", set);
                 let data = subscriber.recv_msg(0).unwrap();
                 let s = std::str::from_utf8(&data).unwrap();
-                log::debug!("C{}: JSON: {}", set, s);
+                log::trace!("C{}: JSON: {}", set, s);
                 log::debug!("C{}: decoded: {}", set, std::str::from_utf8(&data).unwrap());
 
                 match responder::send_job(set, s, &mut txs) {
-                    Ok(_) => log::info!("send_job success"),
+                    Ok(_) => log::debug!("send_job success"),
                     Err(e) => log::error!("send_job error: {}", e),
                 };
             }

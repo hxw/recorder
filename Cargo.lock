@@ -459,7 +459,7 @@ dependencies = [
 
 [[package]]
 name = "mt-recorder"
-version = "0.5.0"
+version = "0.5.2"
 dependencies = [
  "argonautica 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
