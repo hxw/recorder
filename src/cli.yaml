@@ -1,6 +1,6 @@
 ---
 name: mt-recorder
-version: "0.5.2"
+version: "0.5.3"
 author: Christopher Hall <hsw@ms2.hinet.net>
 about: hash bitmarkd blocks
 args:

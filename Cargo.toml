@@ -1,6 +1,6 @@
 [package]
 name = "mt-recorder"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["Christopher Hall <hsw@ms2.hinet.net>"]
 edition = "2018"
 
@@ -29,7 +29,7 @@ bytes = "*"
 hex = "*"
 hex-serde = "*"
 
-base64 = "0.10.1"
+base64 = "*"
 base64-serde = "*"
 
 serde = "*"

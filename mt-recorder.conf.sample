@@ -54,8 +54,8 @@ M.connections = {
         public_key = "PUBLIC:2248344e51fd2c13701f0dbf8a27b44a921679cc24897b297522bfd010753f4d",
 
         -- ports
-        subscribe_port = 2138,
-        request_port = 2139,
+        subscribe_port = 12138,
+        request_port = 12139,
     },
 
     {
@@ -72,8 +72,8 @@ M.connections = {
         public_key = read_file("../bitmarkd/proof.public"),
 
         -- ports
-        subscribe_port = 2138,
-        request_port = 2139,
+        subscribe_port = 22138,
+        request_port = 22139,
     },
 
 }
