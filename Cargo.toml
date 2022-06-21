@@ -13,7 +13,7 @@ simd = ["argonautica/simd"]
 
 [dependencies]
 
-clap = {version = "*", features = ["yaml"]}
+clap = {version = "2", features = ["yaml"]}
 simple-error = "*"
 rlua = "*"
 
