@@ -2,7 +2,7 @@
 
 use base64;
 use base64_serde::base64_serde_type;
-use clap::{load_yaml, App};
+use clap::Parser;
 use hex;
 use log;
 use log::LevelFilter;
@@ -26,18 +26,31 @@ base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
 type MyResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// display more details
+    #[arg(short, long, default_value_t = false)]
+    verbose: bool,
+
+    /// print debug information
+    #[arg(short = 'D', long, default_value_t = false)]
+    debug: bool,
+
+    /// configuration file
+    #[arg(short, long)]
+    config: String,
+}
+
+
 fn main() -> MyResult<()> {
-    // The YAML file is found relative to the current file, similar to how modules are found
-    let yaml = load_yaml!("cli.yaml");
-    let matches = App::from_yaml(yaml).get_matches();
+    let args = Args::parse();
 
-    let debug = matches.is_present("debug");
-
-    let c = matches.value_of("config").unwrap();
-    let cfg = config::read(c, debug)?;
+    let debug = args.debug;
+    let cfg = config::read(&args.config, debug)?;
 
     if debug {
-        println!("Value for config: {}", c);
+        println!("Value for args: {:?}", args);
         println!("Value for cfg: {:?}", cfg);
     }
 
