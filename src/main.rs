@@ -22,7 +22,7 @@ mod config;
 mod responder;
 mod worker;
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
 type MyResult<T> = Result<T, Box<dyn std::error::Error>>;
 

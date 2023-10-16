@@ -12,7 +12,7 @@ use argonautica::config::{Backend, Variant, Version};
 use argonautica::Hasher;
 //use futures_cpupool::CpuPool;
 
-base64_serde_type!(Base64Standard, base64::STANDARD);
+base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Header {
     #[serde(rename = "version")]
