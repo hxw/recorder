@@ -1,6 +1,6 @@
 // block.rs
 
-//use argon2::{Config, ThreadMode, Variant, Version};
+use argon2::{Config, Variant, Version};
 use base64;
 use base64_serde::base64_serde_type;
 use bytes::BufMut;
@@ -8,8 +8,8 @@ use hex_serde;
 use serde_aux::prelude::deserialize_number_from_string;
 use serde_derive::{Deserialize, Serialize};
 
-use argonautica::config::{Backend, Variant, Version};
-use argonautica::Hasher;
+//use argonautica::config::{Backend, Variant, Version};
+//use argonautica::Hasher;
 //use futures_cpupool::CpuPool;
 
 base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
@@ -57,52 +57,53 @@ impl From<Header> for bytes::Bytes {
     }
 }
 
-// pub fn block_digest(data: &[u8]) -> std::vec::Vec<u8> {
-//     // const (
-//     // 	digestMode        = argon2.ModeArgon2d
-//     // 	digestMemory      = 1 << 17 // 128 MiB
-//     // 	digestParallelism = 1
-//     // 	digestIterations  = 4
-//     // 	digestVersion     = argon2.Version13
-//     // )
-//     let config = Config {
-//         variant: Variant::Argon2d,
-//         version: Version::Version13,
-//         mem_cost: 1 << 17,
-//         time_cost: 4,
-//         lanes: 1,
-//         thread_mode: ThreadMode::from_threads(1),
-//         secret: &[],
-//         ad: &[],
-//         hash_length: 32,
-//     };
-
-//     argon2::hash_raw(data, data, &config).unwrap()
-// }
-
+// if using argon2
 pub fn block_digest(data: &[u8]) -> std::vec::Vec<u8> {
-    let mut hasher = Hasher::default();
-    hasher
-        .configure_backend(Backend::C)
-        //.configure_cpu_pool(CpuPool::new(2))
-        .configure_hash_len(32)
-        .configure_iterations(4)
-        .configure_lanes(1)
-        .configure_memory_size(1 << 17)
-        .configure_password_clearing(false)
-        .configure_secret_key_clearing(false)
-        .configure_threads(1)
-        .configure_variant(Variant::Argon2d)
-        .configure_version(Version::_0x13) // Default is `Version::_0x13`
-        .opt_out_of_secret_key(true);
+    // const (
+    // 	digestMode        = argon2.ModeArgon2d
+    // 	digestMemory      = 1 << 17 // 128 MiB
+    // 	digestParallelism = 1
+    // 	digestIterations  = 4
+    // 	digestVersion     = argon2.Version13
+    // )
+    let config = Config {
+        variant: Variant::Argon2d,
+        version: Version::Version13,
+        mem_cost: 1 << 17,
+        time_cost: 4,
+        lanes: 1,
+        secret: &[],
+        ad: &[],
+        hash_length: 32,
+    };
 
-    let hash = hasher
-        .with_password(data)
-        .with_salt(data)
-        .hash_raw()
-        .unwrap();
-    hash.raw_hash_bytes().to_vec()
+    argon2::hash_raw(data, data, &config).unwrap()
 }
+
+// if using argonautica
+// pub fn block_digest(data: &[u8]) -> std::vec::Vec<u8> {
+//     let mut hasher = Hasher::default();
+//     hasher
+//         .configure_backend(Backend::C)
+//         //.configure_cpu_pool(CpuPool::new(2))
+//         .configure_hash_len(32)
+//         .configure_iterations(4)
+//         .configure_lanes(1)
+//         .configure_memory_size(1 << 17)
+//         .configure_password_clearing(false)
+//         .configure_secret_key_clearing(false)
+//         .configure_threads(1)
+//         .configure_variant(Variant::Argon2d)
+//         .configure_version(Version::_0x13) // Default is `Version::_0x13`
+//         .opt_out_of_secret_key(true);
+
+//     let hash = hasher
+//         .with_password(data)
+//         .with_salt(data)
+//         .hash_raw()
+//         .unwrap();
+//     hash.raw_hash_bytes().to_vec()
+// }
 
 #[cfg(test)]
 mod tests {

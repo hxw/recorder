@@ -1,6 +1,6 @@
 [package]
 name = "mt-recorder"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Christopher Hall <hsw@ms2.hinet.net>"]
 description = "argon2 hasher for Bitmark blockchain"
 readme = "README.md"
@@ -24,7 +24,8 @@ spmc = "*"
 zmq = {version = "0.9.2", features = ["vendored"]}
 #zmq = "0.10.0"
 
-argonautica = { version = "*", features = ["simd"] }
+rust-argon2 = "*"
+#argonautica = { version = "*", features = ["simd"] }
 #argonautica = "*"
 
 bytes = "*"
